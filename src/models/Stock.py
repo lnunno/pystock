@@ -24,7 +24,10 @@ class Stock(object):
         Get the closing price of the stock for the given day.
         '''
         p = ys.get_historical_prices(self.symbol, time, time)[time]
-        return p[self.CLOSING_PRICE]
+        return float(p[self.CLOSING_PRICE])
+    
+    def __str__(self):
+        return 'Symbol: %s' % (self.symbol)
     
     def __hash__(self):
         return hash(self.symbol)
