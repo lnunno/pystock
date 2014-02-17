@@ -9,5 +9,6 @@ from models.Stock import Stock
 if __name__ == '__main__':
     google = Stock('GOOG')
     broker = Broker(10000)
-    broker.buy_stock(google, 100, '2014-02-14')
+    broker.buy_stock(google, 1, '2014-02-14')
+    print broker.funds
     
