@@ -19,15 +19,16 @@ class Stock(object):
         '''
         self.symbol = symbol
     
-    def get_price_at_time(self, time):
+    def get_price_at_date(self, date):
         '''
         Get the closing price of the stock for the given day.
         '''
-        p = ys.get_historical_prices(self.symbol, time, time)[time]
+        date_str = date.isoformat()
+        p = ys.get_historical_prices(self.symbol, date_str, date_str)[date_str]
         return float(p[self.CLOSING_PRICE])
     
     def __str__(self):
-        return 'Symbol: %s' % (self.symbol)
+        return '%s' % (self.symbol)
     
     def __hash__(self):
         return hash(self.symbol)
