@@ -6,6 +6,8 @@ Created on Feb 16, 2014
 
 import ystockquote as ys
 
+fortune_500 = []
+
 class Stock(object):
     '''
     Model of a Stock.
