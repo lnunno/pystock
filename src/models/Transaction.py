@@ -20,3 +20,9 @@ class Transaction(object):
         self.transaction_type = transaction_type
         self.amount = amount
         self.date = date
+        
+    def isBuy(self):
+        return self.transaction_type == self.buy
+    
+    def isSell(self):
+        return self.transaction_type == self.sell

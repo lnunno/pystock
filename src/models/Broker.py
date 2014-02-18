@@ -23,12 +23,15 @@ class Broker(object):
         self.holdings = defaultdict(int)
         
     def execute_transaction(self, transaction):
-        if transaction.transaction_type == Transaction.buy:
+        if transaction.isBuy():
             self.buy_stock(transaction.stock, transaction.amount, transaction.date) 
-        elif transaction.transaction_type == Transaction.sell:
+        elif transaction.isSell():
             self.sell_stock(transaction.stock, transaction.amount, transaction.date)
     
     def buy_stock(self, stock, amt, date):
+        '''
+        Buy a specific amount of shares.
+        '''
         price = stock.get_price_at_date(date)
         transaction_cost = price * amt
         if transaction_cost > self.funds:
@@ -37,10 +40,24 @@ class Broker(object):
         self.holdings[stock] += amt
         self.funds -= transaction_cost
         
+    def buy_stock_cash(self, stock, cash_amt, date):
+        '''
+        Buy the maximum amount of shares of a given stock that the amount of cash will allow.
+        '''
+        price = stock.get_price_at_date(date)
+        num_shares = int(cash_amt / price)
+        transaction_cost = price * num_shares
+        if transaction_cost > self.funds:
+            print 'Warning: tried to buy stock with inadequate funds! Transaction cancelled!'
+            return
+        self.holdings[stock] += num_shares
+        self.funds -= transaction_cost
+        
+        
     def sell_stock(self, stock, amt, date):
         shares_held = self.holdings[stock]
         if shares_held < amt:
-            print "Error: tried to sell more shares than were held! Had %d sold %d. Transaction cancelled!" % (shares_held, amt)
+            print "Warning: tried to sell more shares than were held! Had %d sold %d. Transaction cancelled!" % (shares_held, amt)
             return
         self.holdings[stock] -= amt
         price = stock.get_price_at_date(date)
