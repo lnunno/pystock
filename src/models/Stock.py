@@ -6,8 +6,6 @@ Created on Feb 16, 2014
 
 import ystockquote as ys
 
-fortune_500 = []
-
 class Stock(object):
     '''
     Model of a Stock.
@@ -34,8 +32,15 @@ class Stock(object):
     def __hash__(self):
         return hash(self.symbol)
     
-    def __eq__(self,other):
+    def __eq__(self, other):
         return self.symbol == other.symbol
     
-    def __ne__(self,other):
-        return self.symbol != other.symbol    
+    def __ne__(self, other):
+        return self.symbol != other.symbol
+
+def read_fortune_500_symbols(file_path):
+    with open(file_path) as f:
+        lines = f.readlines()
+        stocks = map(lambda x: Stock(x.strip()), lines)
+        return stocks
+fortune_500_stocks = read_fortune_500_symbols('../resources/fortune500Symbols.txt')
