@@ -28,8 +28,7 @@ if __name__ == '__main__':
     google = Stock('GOOG')
     ff = fortune_500_stocks
     broker = Broker(10000)
-    while True:
-        random_transaction(broker, date(2014,2,14))
-        print broker.funds
+    a = google.get_prices_for_date_range(date(2014,2,1), date(2014,2,10))
+    google.plot_price(date(2014,2,1), date(2014,2,10))
     
     
