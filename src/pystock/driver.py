@@ -3,8 +3,8 @@ Created on Feb 16, 2014
 
 @author: lnunno
 '''
-from models.Broker import Broker
-from models.Stock import Stock, fortune_500_stocks
+from Broker import Broker
+from Stock import Stock, fortune_500_stocks
 import random
 from numpy.random import normal
 from math import ceil
