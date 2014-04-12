@@ -13,7 +13,6 @@ class Broker(object):
     @var holdings: A dictionary from stock to number of shares held. Defaults to 0 when no stocks are held.
     '''
 
-
     def __init__(self, initial_funds):
         '''
         Constructor

@@ -4,7 +4,6 @@ Created on Feb 16, 2014
 @author: lnunno
 '''
 
-import ystockquote as ys
 from datetime import datetime
 from collections import OrderedDict
 import matplotlib.pyplot as plt

@@ -3,12 +3,23 @@ Created on Feb 16, 2014
 
 @author: lnunno
 '''
-from Broker import Broker
-from Stock import Stock, fortune_500_stocks
+import numpy as np
+from Stock import fortune_500_stocks
 import random
 from numpy.random import normal
 from math import ceil
-from datetime import date
+from datetime import datetime
+from pystock.sic import load_sic_code_file
+
+def load_stock_csv_file(file_path):
+    def date_conv(date_str):
+        dt = datetime.strptime(date_str,'%m/%d/%Y')
+        return np.datetime64(dt.strftime('%Y-%m-%d'))
+    csv_data = np.genfromtxt(file_path,delimiter=',',names = True, 
+                             dtype=('datetime64[D]','S10','S32',float,int,int,int), 
+                             usecols=('date','TICKER','COMNAM','PRC','VOL','SHROUT','SICCD'),
+                             converters={'date': date_conv}) 
+    return csv_data
 
 def random_transaction(broker, date):
     flip = random.choice([True])
@@ -25,10 +36,10 @@ def random_transaction(broker, date):
         return
 
 if __name__ == '__main__':
-    google = Stock('GOOG')
-    ff = fortune_500_stocks
-    broker = Broker(10000)
-    a = google.get_prices_for_date_range(date(2014,2,1), date(2014,2,10))
-    google.plot_price(date(2014,2,1), date(2014,2,10))
+    p = 'F:/ml_data/FinanceDatasets/energy_west.csv'
+    s = '../resources/Siccodes17.txt'
+    en_west = load_stock_csv_file(p)
+    industries = load_sic_code_file(s)
+    print
     
     
