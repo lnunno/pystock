@@ -5,9 +5,8 @@ Created on Feb 16, 2014
 '''
 
 from collections import defaultdict
-from Transaction import Transaction
 
-class Broker(object):
+class Investor(object):
     '''
     @var funds: Amount of cash available for buying stocks.
     @var holdings: A dictionary from stock to number of shares held. Defaults to 0 when no stocks are held.

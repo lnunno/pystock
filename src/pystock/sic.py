@@ -25,12 +25,16 @@ class Sector(object):
         self.range_start = range_start
         self.range_end = range_end
         self.name = name 
+        self.stocks = []
     
     def __repr__(self, *args, **kwargs):
-        return '%s %d-%d' % (self.name,self.range_start,self.range_end)
+        return '%s %d-%d' % (self.name, self.range_start, self.range_end)
     
-    def in_sector(self,code):
+    def in_sector(self, code):
         return self.range_start <= code <= self.range_end
+    
+    def add_stock(self, stock):
+        self.stocks.append(stock)
         
 def load_sic_code_file(file_path):
     # Groups: number, abbreviation, full name
