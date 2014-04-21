@@ -14,6 +14,7 @@ from math import ceil
 from datetime import datetime
 from pystock.sic import load_sic_code_file
 from pystock.Fortune500 import fortune_500_tickers
+from pystock.Stock import Stock
 
 ticker_column = 4
 
@@ -75,7 +76,6 @@ def load_all_stock_files(root_dir, file_name_ls):
 
 def create_arg_parser():
     parser = ArgumentParser()
-    parser.add_argument('genres_root', help='The directory root for music files separated into folders based on genre (blues, classical, country, etc.)')
     parser.add_argument('--loadStockDF', help='The path to a pickled DataFrame of stock data to load.', action='store', dest='load_pkl_path', default='')
     parser.add_argument('--saveStockDF', help='The path to save a pickled version of the stock data to.', action='store', dest='save_pkl_path', default='')
     return parser
@@ -94,6 +94,10 @@ def main():
             df.to_pickle(save_pkl_path)
     s = '../resources/Siccodes17.txt'
     industries = load_sic_code_file(s)
+    stock_dict = {}
+    for ticker in fortune_500_tickers:
+        stock_dict[ticker] = Stock(df, ticker)
+    print
     
 if __name__ == '__main__':
     main()

@@ -51,7 +51,6 @@ class Investor(object):
         self.holdings[stock] += num_shares
         self.funds -= transaction_cost
         
-        
     def sell_stock(self, stock, amt, date):
         shares_held = self.holdings[stock]
         if shares_held < amt:
