@@ -1,4 +1,8 @@
 '''
+Main script for loading the data, running the algorithms, and providing analysis of the results.
+
+Delegates specific tasks to other classes and then gathers the results.
+
 Created on Feb 16, 2014
 
 @author: lnunno
@@ -91,7 +95,7 @@ def load_all_stock_files(root_dir, file_name_ls):
 
 def create_arg_parser():
     '''
-    Create an argument for running the script with user defined values.
+    Create an argument parser for running the script with user defined values.
     '''
     parser = ArgumentParser()
     parser.add_argument('--loadStockDF', help='The path to a pickled DataFrame of stock data to load.', action='store', dest='load_pkl_path', default='')
