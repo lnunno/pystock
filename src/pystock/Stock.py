@@ -13,6 +13,10 @@ class Stock(object):
     Model of a Stock.
     
     Internally, this is just a specialized view of the master DataFrame which holds all the stock data.
+    
+    This object also provides equivalence and hashing behavior 
+    so that it can be stored in hashed data structures like dictionaries.
+    In these cases, the symbol (ticker) is compared and used as the hash.
     '''
 
     def __init__(self, stock_data, symbol):
