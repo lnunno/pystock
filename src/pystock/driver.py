@@ -4,28 +4,57 @@ Created on Feb 16, 2014
 @author: lnunno
 '''
 import numpy as np
-from Stock import fortune_500_stocks
 import random
+import os
+import csv
+import pandas as pd
+from argparse import ArgumentParser
 from numpy.random import normal
 from math import ceil
 from datetime import datetime
 from pystock.sic import load_sic_code_file
+from pystock.Fortune500 import fortune_500_tickers
+
+ticker_column = 4
 
 def load_stock_csv_file(file_path):
+    abspath = os.path.abspath(file_path)
+    print 'Loading %s...' % (abspath)
+    def line_filterer(stock_file):
+        for i, line in enumerate(stock_file):
+            if i == 0:
+                # Always yield the header.
+                yield line
+            # Parse the line as csv.
+            reader = csv.reader([line])
+            row = reader.next()
+            if row[ticker_column] in fortune_500_tickers:
+                yield line
+            
     def date_conv(date_str):
-        dt = datetime.strptime(date_str,'%m/%d/%Y')
-        return np.datetime64(dt.strftime('%Y-%m-%d'))
-    csv_data = np.genfromtxt(file_path,delimiter=',',names = True, 
-                             dtype=('datetime64[D]','S10','S32',float,int,int,int), 
-                             usecols=('date','TICKER','COMNAM','PRC','VOL','SHROUT','SICCD'),
+        '''
+        @return: A DataFrame of stock price data.
+        '''
+        try:
+            dt = datetime.strptime(date_str, '%Y/%m/%d')
+            return np.datetime64(dt.strftime('%Y-%m-%d'))
+        except ValueError:
+            print "WARNING: Bad date string ", date_str
+            return None
+    with open(file_path) as stock_file:
+        csv_data = np.genfromtxt(line_filterer(stock_file), delimiter=',', names=True,
+                             dtype=('datetime64[D]', 'S10', 'S32', float, int, int, int, float),
+                             usecols=('date', 'TICKER', 'COMNAM', 'PRC', 'VOL', 'SHROUT', 'SICCD', 'RET'),
                              converters={'date': date_conv}) 
-    return csv_data
+    df = pd.DataFrame(csv_data)
+    print 'Finished loading %s.' % (abspath)
+    return df
 
 def random_transaction(broker, date):
     flip = random.choice([True])
     base_amt = 10
     if flip:
-        stock = random.choice(fortune_500_stocks)
+        stock = random.choice(fortune_500_tickers)
         buy_amt = ceil(base_amt + base_amt * normal())
         broker.buy_stock(stock, buy_amt, date)
         return
@@ -35,11 +64,37 @@ def random_transaction(broker, date):
         broker.sell_stock(stock, buy_amt, date)
         return
 
-if __name__ == '__main__':
-    p = 'F:/ml_data/FinanceDatasets/energy_west.csv'
-    s = '../resources/Siccodes17.txt'
-    en_west = load_stock_csv_file(p)
-    industries = load_sic_code_file(s)
-    print
+def load_all_stock_files(root_dir, file_name_ls):
+    data_frame_ls = []
+    for file_name in file_name_ls:
+        full_path = os.path.join(root_dir, file_name)
+        df = load_stock_csv_file(full_path)
+        data_frame_ls.append(df)
+    full_df = pd.concat(data_frame_ls)
+    return full_df 
+
+def create_arg_parser():
+    parser = ArgumentParser()
+    parser.add_argument('genres_root', help='The directory root for music files separated into folders based on genre (blues, classical, country, etc.)')
+    parser.add_argument('--loadStockDF', help='The path to a pickled DataFrame of stock data to load.', action='store', dest='load_pkl_path', default='')
+    parser.add_argument('--saveStockDF', help='The path to save a pickled version of the stock data to.', action='store', dest='save_pkl_path', default='')
+    return parser
     
+def main():
+    parser = create_arg_parser()
+    args = parser.parse_args()
+    load_pkl_path = args.load_pkl_path
+    save_pkl_path = args.save_pkl_path
+    if load_pkl_path:
+        df = pd.read_pickle(load_pkl_path)
+    else:
+        file_name_ls = ['2005.csv', '2007.csv', '2009.csv', '2011.csv', '2013.csv']
+        df = load_all_stock_files('F:/ml_data/FinanceDatasets', file_name_ls)
+        if save_pkl_path:
+            df.to_pickle(save_pkl_path)
+    s = '../resources/Siccodes17.txt'
+    industries = load_sic_code_file(s)
+    
+if __name__ == '__main__':
+    main()
     

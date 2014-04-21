@@ -65,10 +65,3 @@ class Stock(object):
     
     def __ne__(self, other):
         return self.symbol != other.symbol
-
-def read_fortune_500_symbols(file_path):
-    with open(file_path) as f:
-        lines = f.readlines()
-        stocks = map(lambda x: Stock(x.strip()), lines)
-        return stocks
-fortune_500_stocks = read_fortune_500_symbols('../resources/fortune500Symbols.txt')
