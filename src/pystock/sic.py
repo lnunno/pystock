@@ -1,4 +1,6 @@
 '''
+Module for sector and industry codes.
+
 Created on Apr 12, 2014
 
 @author: Lucas
@@ -6,6 +8,9 @@ Created on Apr 12, 2014
 import re
 
 class Industry(object):
+    '''
+    Class that represents an Industry which is a collection of sectors.
+    '''
 
     def __init__(self, code, abbrv, name):
         self.code = code
@@ -20,6 +25,9 @@ class Industry(object):
         return self.sectors.__repr__()
         
 class Sector(object):
+    '''
+    Class that represents a Sector. Defined by the start code and end code which any stock that falls into that range is a part of.
+    '''
     
     def __init__(self, range_start, range_end, name):
         self.range_start = range_start
