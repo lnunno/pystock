@@ -77,11 +77,19 @@ class Stock(object):
     
     def predict_prices(self, start_date, end_date, predict_dates, method='SGD'):
         '''
+        Stochastic Gradient Descent (SGD) is a "linear model fitted by minimizing a regularized empirical loss".
+        
+        Support Vector Regression (SVR) is an extension of Support Vector Machines used to solve regression problems.
+        An explanation and example of its usage are available here:
+        http://scikit-learn.org/dev/modules/svm.html#regression
+        http://scikit-learn.org/dev/auto_examples/svm/plot_svm_regression.html#example-svm-plot-svm-regression-py
+        
         @param start_date: string Date to use as beginning of training data.
         @param end_date: string Date to use as end of training data.
         @param predict_dates: [string] Dates to predict prices of.
+        @param method: Method used for regression. One of: 'SGD', 'SVR', ...
         '''
-        predict_dates = [np.datetime64(d) for d in predict_dates] # Convert to datetime64 so we can take string args and it won't break.
+        predict_dates = [np.datetime64(d) for d in predict_dates]  # Convert to datetime64 so we can take string args and it won't break.
         pr = self.get_prices_range(start_date, end_date)
         np_dt64_ls = pr.index.values
         def datetime64_to_ordinal(dt64):
@@ -91,13 +99,15 @@ class Stock(object):
         training_date_ordinals = datetime64_to_ordinal_arr(np_dt64_ls)
         prediction_dates_ordinals = datetime64_to_ordinal_arr(predict_dates)
         X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)  # Have to reshape into a 2d array from a 1d array.
-        X = np.log10(X) # Prevent overflow
-        prediction_dates_ordinals = np.log10(prediction_dates_ordinals) # Prevent overflow
+        X = np.log10(X)  # Prevent overflow
+        prediction_dates_ordinals = np.log10(prediction_dates_ordinals)  # Prevent overflow
         y = pr.values
         
         # Train using the training X and y data.
         if method == 'SGD':
             regressor = SGDRegressor()
+        elif method == 'SVR':
+            pass
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
         regressor.fit(X, y)
