@@ -5,7 +5,6 @@ Created on Feb 16, 2014
 '''
 import pandas as pd
 from datetime import datetime
-from collections import OrderedDict
 import matplotlib.pyplot as plt
 
 class Stock(object):
@@ -47,15 +46,30 @@ class Stock(object):
         price_values = self.data['PRC'].values
         return pd.Series(price_values, index=date_index)
     
+    def get_prices_range(self, start_date, end_date):
+        '''
+        Get the stock prices between start_date and end_date.
+        @param start_date: str The beginning date to get price info.
+        @param end_date: str The ending date to get price info.
+        '''
+        return self.get_price_time_series()[start_date:end_date]
+    
     def _iso_to_date(self, s):
         return datetime.strptime(s, '%Y-%m-%d').date()
     
-    def plot_price(self, start_date, end_date):
-        price_dict = self.get_prices_for_date_range(start_date, end_date)
-        date_ls = [(self._iso_to_date(x), price) for x, price in price_dict.items()]
-        date_ls.sort()
-        print date_ls
-    
+    def plot_price(self, start_date, end_date, show=False, save_path=''):
+        price_ts = self.get_prices_range(start_date, end_date)
+        plt.figure()
+        plot = price_ts.plot()
+        plt.xlabel('Time')
+        plt.ylabel('Price')
+        plt.title('Price for %s from %s to %s' % (self.symbol, start_date, end_date))
+        if show:
+            plt.show(plot)
+        elif save_path:
+            plt.savefig(plot)
+        return plot
+        
     def __str__(self):
         return '%s' % (self.symbol)
     

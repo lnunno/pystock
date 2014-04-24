@@ -12,12 +12,14 @@ class Investor(object):
     @var holdings: A dictionary from stock to number of shares held. Defaults to 0 when no stocks are held.
     '''
 
-    def __init__(self, initial_funds):
+    def __init__(self, initial_funds, start_date):
         '''
-        Constructor
+        @param initial_funds: The amount of cash that the Investor has available to invest initially.
+        @param start_date: The point in time that an Investor begins investing. 
         '''
         self.initial_funds = initial_funds
         self.funds = initial_funds
+        self.current_date = start_date
         self.holdings = defaultdict(int)
         
     def execute_transaction(self, transaction):
