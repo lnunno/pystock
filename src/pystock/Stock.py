@@ -6,6 +6,7 @@ Created on Feb 16, 2014
 import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
+from sklearn.linear_model import SGDRegressor
 
 class Stock(object):
     '''
@@ -54,6 +55,9 @@ class Stock(object):
         '''
         return self.get_price_time_series()[start_date:end_date]
     
+    def get_price_at_date(self, date):
+        return self.get_price_time_series()[date]
+    
     def _iso_to_date(self, s):
         return datetime.strptime(s, '%Y-%m-%d').date()
     
@@ -69,6 +73,27 @@ class Stock(object):
         elif save_path:
             plt.savefig(plot)
         return plot
+    
+    def predict_price_at(self, start_date, end_date, predict_dates, method='SGD'):
+        '''
+        @param start_date: Date to use as beginning of training data.
+        @param end_date: Date to use as end of training data.
+        @param predict_dates: Dates to predict prices of.
+        '''
+        pr = self.get_prices_range(start_date, end_date)
+        dates = pr.index.values
+        prices = pr.values
+        X = dates.reshape(dates.shape[0], 1)  # Have to reshape into a 2d array from a 1d array.
+        y = prices.values
+        
+        # Train using the training X and y data.
+        if method == 'SGD':
+            regressor = SGDRegressor()
+        else:
+            raise ValueError('Unrecognized regression method %s' % (method))
+        regressor.fit(X, y)
+        predictions = regressor.predict(predict_dates)
+        return predictions
         
     def __str__(self):
         return '%s' % (self.symbol)
