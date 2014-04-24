@@ -4,6 +4,7 @@ Created on Feb 16, 2014
 @author: lnunno
 '''
 import pandas as pd
+import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDRegressor
@@ -74,17 +75,25 @@ class Stock(object):
             plt.savefig(plot)
         return plot
     
-    def predict_price_at(self, start_date, end_date, predict_dates, method='SGD'):
+    def predict_prices(self, start_date, end_date, predict_dates, method='SGD'):
         '''
-        @param start_date: Date to use as beginning of training data.
-        @param end_date: Date to use as end of training data.
-        @param predict_dates: Dates to predict prices of.
+        @param start_date: string Date to use as beginning of training data.
+        @param end_date: string Date to use as end of training data.
+        @param predict_dates: [string] Dates to predict prices of.
         '''
+        predict_dates = [np.datetime64(d) for d in predict_dates] # Convert to datetime64 so we can take string args and it won't break.
         pr = self.get_prices_range(start_date, end_date)
-        dates = pr.index.values
-        prices = pr.values
-        X = dates.reshape(dates.shape[0], 1)  # Have to reshape into a 2d array from a 1d array.
-        y = prices.values
+        np_dt64_ls = pr.index.values
+        def datetime64_to_ordinal(dt64):
+            return pd.to_datetime(dt64).toordinal()
+        def datetime64_to_ordinal_arr(dt64_ls):
+            return np.array([datetime64_to_ordinal(dt64) for dt64 in dt64_ls])
+        training_date_ordinals = datetime64_to_ordinal_arr(np_dt64_ls)
+        prediction_dates_ordinals = datetime64_to_ordinal_arr(predict_dates)
+        X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)  # Have to reshape into a 2d array from a 1d array.
+        X = np.log10(X) # Prevent overflow
+        prediction_dates_ordinals = np.log10(prediction_dates_ordinals) # Prevent overflow
+        y = pr.values
         
         # Train using the training X and y data.
         if method == 'SGD':
@@ -92,7 +101,7 @@ class Stock(object):
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
         regressor.fit(X, y)
-        predictions = regressor.predict(predict_dates)
+        predictions = regressor.predict(prediction_dates_ordinals)
         return predictions
         
     def __str__(self):

@@ -119,6 +119,7 @@ def main():
     stock_dict = {}
     for ticker in fortune_500_tickers:
         stock_dict[ticker] = Stock(df, ticker)
+    stock_dict['AAPL'].predict_prices('2013-01-01','2013-01-10',['2013-01-11'])
     print
     
 if __name__ == '__main__':
