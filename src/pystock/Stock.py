@@ -8,6 +8,8 @@ import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDRegressor
+from sklearn import svm
+from sklearn.preprocessing import normalize
 
 class Stock(object):
     '''
@@ -93,25 +95,30 @@ class Stock(object):
         pr = self.get_prices_range(start_date, end_date)
         np_dt64_ls = pr.index.values
         def datetime64_to_ordinal(dt64):
-            return pd.to_datetime(dt64).toordinal()
+            return float(pd.to_datetime(dt64).toordinal())
         def datetime64_to_ordinal_arr(dt64_ls):
             return np.array([datetime64_to_ordinal(dt64) for dt64 in dt64_ls])
         training_date_ordinals = datetime64_to_ordinal_arr(np_dt64_ls)
-        prediction_dates_ordinals = datetime64_to_ordinal_arr(predict_dates)
-        X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)  # Have to reshape into a 2d array from a 1d array.
-        X = np.log10(X)  # Prevent overflow
-        prediction_dates_ordinals = np.log10(prediction_dates_ordinals)  # Prevent overflow
+        p = datetime64_to_ordinal_arr(predict_dates)
+        
+        # Have to reshape into a 2d array from a 1d array.
+        p = p.reshape(p.shape[0],1)
+        X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)
+        
+        # Normalize dates
+        X = normalize(X, axis=0)
+        p = normalize(p,axis=0)
+        
         y = pr.values
         
-        # Train using the training X and y data.
         if method == 'SGD':
             regressor = SGDRegressor()
         elif method == 'SVR':
-            pass
+            regressor = svm.SVR()
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
-        regressor.fit(X, y)
-        predictions = regressor.predict(prediction_dates_ordinals)
+        regressor.fit(X, y) # Train using the training X and y data.
+        predictions = regressor.predict(p)
         return predictions
         
     def __str__(self):
