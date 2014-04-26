@@ -120,10 +120,10 @@ def main():
     for ticker in fortune_500_tickers:
         stock_dict[ticker] = Stock(df, ticker)
     apple = stock_dict['AAPL']
-    lin = apple.predict_prices('2013-01-01','2013-01-23',['2013-01-24','2013-01-25','2013-01-26'],method='Linear')
-    sgd = apple.predict_prices('2013-01-01','2013-01-23',['2013-01-24','2013-01-25','2013-01-26'],method='SGD')
-    svr = apple.predict_prices('2013-01-01','2013-01-23',['2013-01-24','2013-01-25','2013-01-26'],method='SVR')
-    real_prices = apple.get_prices_range('2013-01-24','2013-01-26')
+    lin = apple.predict_prices('2013-01-23',20,5,method='Linear')
+    sgd = apple.predict_prices('2013-01-23',20,5,method='SGD')
+    svr = apple.predict_prices('2013-01-23',20,5,method='SVR')
+    real_prices = apple.get_prices_after('2013-01-23',5)
     print
     
 if __name__ == '__main__':

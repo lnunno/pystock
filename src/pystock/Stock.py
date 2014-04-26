@@ -7,10 +7,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn import svm
-from sklearn.preprocessing import normalize
+from pystock.time_utils import prev_n_business_days, next_n_business_days, \
+    datetime64_to_ordinal_arr
 
 class Stock(object):
     '''
@@ -27,7 +27,6 @@ class Stock(object):
 
     def __init__(self, stock_data, symbol):
         '''
-        
         @param symbol: The ticker or stock symbol for this stock. 
         '''
         idx = (stock_data.TICKER == symbol)
@@ -62,11 +61,12 @@ class Stock(object):
         '''
         return self.prices[start_date:end_date]
     
-    def get_price_at_date(self, date):
-        return self.get_price_time_series()[date]
+    def get_prices_after(self,start_date,n ):
+        date_range = next_n_business_days(start_date, n, include_start=True)
+        return self.get_prices_range(date_range[0], date_range[-1])
     
-    def _iso_to_date(self, s):
-        return datetime.strptime(s, '%Y-%m-%d').date()
+    def get_price_at_date(self, date):
+        return self.prices[date]
     
     def plot_price(self, start_date, end_date, show=False, save_path=''):
         price_ts = self.get_prices_range(start_date, end_date)
@@ -81,7 +81,7 @@ class Stock(object):
             plt.savefig(plot)
         return plot
     
-    def predict_prices(self, start_date, end_date, predict_dates, method='Linear'):
+    def predict_prices(self, predict_start, num_previous_dates, num_successive_dates, method='Linear'):
         '''
         Linear Regression (Linear): Standard linear regression.
         
@@ -92,23 +92,21 @@ class Stock(object):
         http://scikit-learn.org/dev/modules/svm.html#regression
         http://scikit-learn.org/dev/auto_examples/svm/plot_svm_regression.html#example-svm-plot-svm-regression-py
         
-        @param start_date: string Date to use as beginning of training data.
-        @param end_date: string Date to use as end of training data.
-        @param predict_dates: [string] Dates to predict prices of.
+        @param predict_start: string The date to start the prediction.
+        @param num_previous_dates: int Number of dates to use prior to predict_start as the training data.
+        @param num_successive_dates: int Number of dates to predict after predict_start.
         @param method: Method used for regression. One of: 'Linear', 'SGD', 'SVR', ...
         '''
-        predict_dates = [np.datetime64(d) for d in predict_dates]  # Convert to datetime64 so we can take string args and it won't break.
-        pr = self.get_prices_range(start_date, end_date)
+        predict_dates = next_n_business_days(predict_start, num_successive_dates, include_start=True)  # Convert to datetime64 so we can take string args and it won't break.
+        training_dates = prev_n_business_days(predict_start, num_previous_dates, include_start=False)
+        pr = self.get_prices_range(str(training_dates[-1]), str(training_dates[0]))
         np_dt64_ls = pr.index.values
-        def datetime64_to_ordinal(dt64):
-            return float(pd.to_datetime(dt64).toordinal())
-        def datetime64_to_ordinal_arr(dt64_ls):
-            return np.array([datetime64_to_ordinal(dt64) for dt64 in dt64_ls])
+        
         training_date_ordinals = datetime64_to_ordinal_arr(np_dt64_ls)
         p = datetime64_to_ordinal_arr(predict_dates)
         
         # Have to reshape into a 2d array from a 1d array.
-        p = p.reshape(p.shape[0],1)
+        p = p.reshape(p.shape[0], 1)
         X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)
         
         scale = np.min(X)
@@ -127,7 +125,7 @@ class Stock(object):
             regressor = LinearRegression()
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
-        regressor.fit(X, y) # Train using the training X and y data.
+        regressor.fit(X, y)  # Train using the training X and y data.
         predictions = regressor.predict(p)
         return predictions
         

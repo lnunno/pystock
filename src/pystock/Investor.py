@@ -65,9 +65,4 @@ class Investor(object):
     def profit(self):
         return self.funds - self.initial_funds
     
-    def next_day(self):
-        '''
-        Roll the clock forward one business day.
-        '''
-        self.current_date = np.busday_offset(self.current_date, 1, roll='backward')
-        return self.current_date
+    
