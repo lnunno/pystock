@@ -32,11 +32,22 @@ def prev_n_business_days(start_date, n, include_start=False):
         dates.append(curr_date)
     return dates
 
+def timeframe(start_date, num_previous_days, num_succ_days):
+    '''
+    NOTE: The start_date will only be included if it is a valid business day.
+    
+    @return: A list of business days prior, including, and after the start_date.  
+    '''
+    pds = prev_n_business_days(start_date, num_previous_days, include_start=False)
+    pds.reverse()
+    nds = next_n_business_days(start_date, num_succ_days, include_start=True)
+    return pds + nds
+
 def prev_business_day(day):
     '''
     Roll the clock backward one business day.
     '''
-    return np.busday_offset(day,-1,roll='backward')
+    return np.busday_offset(day, -1, roll='backward')
 
 def next_business_day(day):
         '''

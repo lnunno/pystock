@@ -5,10 +5,10 @@ Created on Feb 16, 2014
 '''
 import pandas as pd
 import numpy as np
-from datetime import datetime
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn import svm
+from sklearn.preprocessing import normalize
 from pystock.time_utils import prev_n_business_days, next_n_business_days, \
     datetime64_to_ordinal_arr
 
@@ -61,7 +61,7 @@ class Stock(object):
         '''
         return self.prices[start_date:end_date]
     
-    def get_prices_after(self,start_date,n ):
+    def get_prices_after(self, start_date, n):
         date_range = next_n_business_days(start_date, n, include_start=True)
         return self.get_prices_range(date_range[0], date_range[-1])
     
@@ -81,7 +81,12 @@ class Stock(object):
             plt.savefig(plot)
         return plot
     
-    def predict_prices(self, predict_start, num_previous_dates, num_successive_dates, method='Linear'):
+    def predict_prices(self,
+                       predict_start,
+                       num_previous_dates,
+                       num_successive_dates,
+                       include_training_dates=False,
+                       method='Linear'):
         '''
         Linear Regression (Linear): Standard linear regression.
         
@@ -95,27 +100,33 @@ class Stock(object):
         @param predict_start: string The date to start the prediction.
         @param num_previous_dates: int Number of dates to use prior to predict_start as the training data.
         @param num_successive_dates: int Number of dates to predict after predict_start.
+        @param include_training_dates: bool Include the training dates in the predicted prices.
         @param method: Method used for regression. One of: 'Linear', 'SGD', 'SVR', ...
         '''
         predict_dates = next_n_business_days(predict_start, num_successive_dates, include_start=True)  # Convert to datetime64 so we can take string args and it won't break.
         training_dates = prev_n_business_days(predict_start, num_previous_dates, include_start=False)
-        pr = self.get_prices_range(str(training_dates[-1]), str(training_dates[0]))
-        np_dt64_ls = pr.index.values
+        training_prices_series = self.get_prices_range(str(training_dates[-1]), str(training_dates[0]))
+        training_date_index_ls = training_prices_series.index.values
         
-        training_date_ordinals = datetime64_to_ordinal_arr(np_dt64_ls)
+        td_ordinals = datetime64_to_ordinal_arr(training_date_index_ls)
         p = datetime64_to_ordinal_arr(predict_dates)
+        
+        if include_training_dates:
+            # Include training data in predictions.
+            p = td_ordinals + p
         
         # Have to reshape into a 2d array from a 1d array.
         p = p.reshape(p.shape[0], 1)
-        X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)
-        
-        scale = np.min(X)
+        X = td_ordinals.reshape(td_ordinals.shape[0], 1)
         
         # Normalize dates
-        X -= scale
-        p -= scale
+        A = np.vstack((X,p)) # Have to stack to normalize training and test data as one.
+        A = normalize(A,axis=0)
+        n = p.shape[0]
+        X = A[:-n]
+        p = A[-n:]
         
-        y = pr.values
+        y = training_prices_series.values
         
         if method == 'SGD':
             regressor = SGDRegressor()
