@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import SGDRegressor
 from sklearn import svm
 from sklearn.preprocessing import normalize
@@ -20,6 +21,8 @@ class Stock(object):
     This object also provides equivalence and hashing behavior 
     so that it can be stored in hashed data structures like dictionaries.
     In these cases, the symbol (ticker) is compared and used as the hash.
+    
+    @ivar prices: The price time series.
     '''
 
     def __init__(self, stock_data, symbol):
@@ -30,6 +33,7 @@ class Stock(object):
         idx = (stock_data.TICKER == symbol)
         self.data = stock_data.ix[idx]
         self.symbol = symbol
+        self.prices = self.get_price_time_series()
         
     def get_price_time_series(self):
         '''
@@ -56,7 +60,7 @@ class Stock(object):
         @param start_date: str The beginning date to get price info.
         @param end_date: str The ending date to get price info.
         '''
-        return self.get_price_time_series()[start_date:end_date]
+        return self.prices[start_date:end_date]
     
     def get_price_at_date(self, date):
         return self.get_price_time_series()[date]
@@ -77,8 +81,10 @@ class Stock(object):
             plt.savefig(plot)
         return plot
     
-    def predict_prices(self, start_date, end_date, predict_dates, method='SGD'):
+    def predict_prices(self, start_date, end_date, predict_dates, method='Linear'):
         '''
+        Linear Regression (Linear): Standard linear regression.
+        
         Stochastic Gradient Descent (SGD) is a "linear model fitted by minimizing a regularized empirical loss".
         
         Support Vector Regression (SVR) is an extension of Support Vector Machines used to solve regression problems.
@@ -89,7 +95,7 @@ class Stock(object):
         @param start_date: string Date to use as beginning of training data.
         @param end_date: string Date to use as end of training data.
         @param predict_dates: [string] Dates to predict prices of.
-        @param method: Method used for regression. One of: 'SGD', 'SVR', ...
+        @param method: Method used for regression. One of: 'Linear', 'SGD', 'SVR', ...
         '''
         predict_dates = [np.datetime64(d) for d in predict_dates]  # Convert to datetime64 so we can take string args and it won't break.
         pr = self.get_prices_range(start_date, end_date)
@@ -105,9 +111,11 @@ class Stock(object):
         p = p.reshape(p.shape[0],1)
         X = training_date_ordinals.reshape(training_date_ordinals.shape[0], 1)
         
+        scale = np.min(X)
+        
         # Normalize dates
-        X = normalize(X, axis=0)
-        p = normalize(p,axis=0)
+        X -= scale
+        p -= scale
         
         y = pr.values
         
@@ -115,6 +123,8 @@ class Stock(object):
             regressor = SGDRegressor()
         elif method == 'SVR':
             regressor = svm.SVR()
+        elif method == 'Linear':
+            regressor = LinearRegression()
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
         regressor.fit(X, y) # Train using the training X and y data.
