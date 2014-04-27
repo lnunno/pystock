@@ -12,6 +12,7 @@ import random
 import os
 import time
 import csv
+from random import choice
 import pandas as pd
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
@@ -116,16 +117,19 @@ def use_all_regression_methods(stock, n_prev, n_predict, start_date):
         r = stock.predict_prices(start_date, n_prev, n_predict, method=m, include_training_dates=True)
         stock.plot_price(tf[0], tf[-1])
         r.plot()
-        fig_title = '%s_%s_%d-train_%d-predict' % (stock.symbol, m, n_prev, n_predict)
+        fig_title = '%s_%s_%04d-train_%04d-predict' % (stock.symbol, m, n_prev, n_predict)
         plt.savefig('../output/%s' % (fig_title))
+        plt.close()
 
 def ex(stock_dict):
     symbol = 'AAPL'
-    apple = stock_dict[symbol]
-    n_prev = 20
-    n_predict = 5
+    stock = stock_dict[symbol]
+    max_dates = 90
+    sample_range = np.linspace(2, max_dates,num=10).astype(int)
+    n_predict = 10
     start_date = '2013-01-23'
-    use_all_regression_methods(symbol, apple, n_prev, n_predict, start_date)
+    for n_prev in sample_range:
+        use_all_regression_methods(stock, n_prev, n_predict, start_date)
     print
 
 
@@ -156,7 +160,7 @@ def main():
     stock_dict = {}
     print 'Building stock views...'
     if debug:
-        stock_dict['AAPL'] = Stock(df,'AAPL')
+        stock_dict['AAPL'] = Stock(df, 'AAPL')
     else:
         for ticker in fortune_500_tickers:
             stock_dict[ticker] = Stock(df, ticker)

@@ -147,7 +147,7 @@ class Stock(object):
         if method == 'SGD':
             regressor = SGDRegressor()
         elif method == 'SVR':
-            regressor = svm.SVR()
+            regressor = svm.SVR(C=1e3)
         elif method == 'Linear':
             regressor = LinearRegression()
         else:
