@@ -11,6 +11,19 @@ from sklearn import svm
 from sklearn.preprocessing import normalize
 from pystock.time_utils import prev_n_business_days, next_n_business_days, \
     datetime64_to_ordinal_arr
+    
+class Regression(object):
+    
+    LINEAR = 'Linear'
+    SGD = 'SGD'
+    SVR = 'SVR'
+    
+    methods = [
+               LINEAR,
+               SGD,
+               SVR
+               ]
+    
 
 class Stock(object):
     '''
@@ -71,15 +84,15 @@ class Stock(object):
     def plot_price(self, start_date, end_date, show=False, save_path=''):
         price_ts = self.get_prices_range(start_date, end_date)
         plt.figure()
-        plot = price_ts.plot()
+        figure = price_ts.plot()
         plt.xlabel('Time')
         plt.ylabel('Price')
         plt.title('Price for %s from %s to %s' % (self.symbol, start_date, end_date))
         if show:
-            plt.show(plot)
+            plt.show(figure)
         elif save_path:
-            plt.savefig(plot)
-        return plot
+            plt.savefig(figure)
+        return figure
     
     def predict_prices(self,
                        predict_start,
@@ -102,26 +115,29 @@ class Stock(object):
         @param num_successive_dates: int Number of dates to predict after predict_start.
         @param include_training_dates: bool Include the training dates in the predicted prices.
         @param method: Method used for regression. One of: 'Linear', 'SGD', 'SVR', ...
+        
+        @return: A Series with a DatetimeIndex with the dates and predicted prices.
         '''
         predict_dates = next_n_business_days(predict_start, num_successive_dates, include_start=True)  # Convert to datetime64 so we can take string args and it won't break.
         training_dates = prev_n_business_days(predict_start, num_previous_dates, include_start=False)
         training_prices_series = self.get_prices_range(str(training_dates[-1]), str(training_dates[0]))
         training_date_index_ls = training_prices_series.index.values
         
+        if include_training_dates:
+            # Include training data in predictions.
+            predict_dates = np.hstack((training_dates,predict_dates))
+            
         td_ordinals = datetime64_to_ordinal_arr(training_date_index_ls)
         p = datetime64_to_ordinal_arr(predict_dates)
         
-        if include_training_dates:
-            # Include training data in predictions.
-            p = td_ordinals + p
         
         # Have to reshape into a 2d array from a 1d array.
         p = p.reshape(p.shape[0], 1)
         X = td_ordinals.reshape(td_ordinals.shape[0], 1)
         
         # Normalize dates
-        A = np.vstack((X,p)) # Have to stack to normalize training and test data as one.
-        A = normalize(A,axis=0)
+        A = np.vstack((X, p))  # Have to stack to normalize training and test data as one.
+        A = normalize(A, axis=0)
         n = p.shape[0]
         X = A[:-n]
         p = A[-n:]
@@ -138,7 +154,9 @@ class Stock(object):
             raise ValueError('Unrecognized regression method %s' % (method))
         regressor.fit(X, y)  # Train using the training X and y data.
         predictions = regressor.predict(p)
-        return predictions
+        index = pd.DatetimeIndex(predict_dates)
+        series = pd.Series(predictions,index=index)
+        return series
         
     def __str__(self):
         return '%s' % (self.symbol)

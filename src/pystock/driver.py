@@ -10,15 +10,18 @@ Created on Feb 16, 2014
 import numpy as np
 import random
 import os
+import time
 import csv
 import pandas as pd
+import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 from numpy.random import normal
 from math import ceil
 from datetime import datetime
 from pystock.sic import load_sic_code_file
 from pystock.Fortune500 import fortune_500_tickers
-from pystock.Stock import Stock
+from pystock.Stock import Stock, Regression
+from pystock.time_utils import timeframe, next_n_business_days
 
 ticker_column = 4
 
@@ -100,31 +103,65 @@ def create_arg_parser():
     parser = ArgumentParser()
     parser.add_argument('--loadStockDF', help='The path to a pickled DataFrame of stock data to load.', action='store', dest='load_pkl_path', default='')
     parser.add_argument('--saveStockDF', help='The path to save a pickled version of the stock data to.', action='store', dest='save_pkl_path', default='')
+    parser.add_argument('--debug', help='Run in debug mode.', action='store_true', dest='debug', default=False)
     return parser
     
-def main():
-    parser = create_arg_parser()
-    args = parser.parse_args()
-    load_pkl_path = args.load_pkl_path
-    save_pkl_path = args.save_pkl_path
+
+def use_all_regression_methods(stock, n_prev, n_predict, start_date):
+    '''
+    Apply all regression methods to the given stock and save the results.
+    '''
+    tf = timeframe(start_date, n_prev, n_predict)
+    for m in Regression.methods:
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=m, include_training_dates=True)
+        stock.plot_price(tf[0], tf[-1])
+        r.plot()
+        fig_title = '%s_%s_%d-train_%d-predict' % (stock.symbol, m, n_prev, n_predict)
+        plt.savefig('../output/%s' % (fig_title))
+
+def ex(stock_dict):
+    symbol = 'AAPL'
+    apple = stock_dict[symbol]
+    n_prev = 20
+    n_predict = 5
+    start_date = '2013-01-23'
+    use_all_regression_methods(symbol, apple, n_prev, n_predict, start_date)
+    print
+
+
+def get_stock_data_frame(load_pkl_path, save_pkl_path):
     if load_pkl_path:
+        load_start = time.time()
+        print 'Loading pickled dataset from %s...' % (os.path.abspath(load_pkl_path))
         df = pd.read_pickle(load_pkl_path)
+        print 'Done loading data.'
+        load_end = time.time()
+        print 'Took %d seconds' % (load_end - load_start)
     else:
         file_name_ls = ['2005.csv', '2007.csv', '2009.csv', '2011.csv', '2013.csv']
         df = load_all_stock_files('F:/ml_data/FinanceDatasets', file_name_ls)
         if save_pkl_path:
             df.to_pickle(save_pkl_path)
+    return df
+
+def main():
+    parser = create_arg_parser()
+    args = parser.parse_args()
+    load_pkl_path = args.load_pkl_path
+    save_pkl_path = args.save_pkl_path
+    debug = args.debug
+    df = get_stock_data_frame(load_pkl_path, save_pkl_path)
     s = '../resources/Siccodes17.txt'
     industries = load_sic_code_file(s)
     stock_dict = {}
-    for ticker in fortune_500_tickers:
-        stock_dict[ticker] = Stock(df, ticker)
-    apple = stock_dict['AAPL']
-    lin = apple.predict_prices('2013-01-23',1000,5,method='Linear')
-    sgd = apple.predict_prices('2013-01-23',1000,5,method='SGD')
-    svr = apple.predict_prices('2013-01-23',1000,5,method='SVR')
-    real_prices = apple.get_prices_after('2013-01-23',5)
-    print
+    print 'Building stock views...'
+    if debug:
+        stock_dict['AAPL'] = Stock(df,'AAPL')
+    else:
+        for ticker in fortune_500_tickers:
+            stock_dict[ticker] = Stock(df, ticker)
+    print 'Done building stock views.'
+    ex(stock_dict)
     
 if __name__ == '__main__':
     main()
