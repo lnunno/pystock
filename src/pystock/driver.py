@@ -1,28 +1,28 @@
 '''
-Main script for loading the data, running the algorithms, and providing analysis of the results.
+Main script for loading the data.
 
-Delegates specific tasks to other classes and then gathers the results.
+Delegates specific tasks to other classes and then gathers the results in the regression_analysis module.
 
 Created on Feb 16, 2014
 
 @author: lnunno
 '''
-import numpy as np
-import random
-import os
-import time
-import csv
-from random import choice
-import pandas as pd
-import matplotlib.pyplot as plt
 from argparse import ArgumentParser
-from numpy.random import normal
-from math import ceil
+import csv
 from datetime import datetime
-from pystock.sic import load_sic_code_file
+from math import ceil
+import os
+import random
+import time
+
+from numpy.random import normal
+
+import numpy as np
+import pandas as pd
 from pystock.Fortune500 import fortune_500_tickers
-from pystock.Stock import Stock, Regression
-from pystock.time_utils import timeframe, next_n_business_days
+from pystock.Stock import Stock
+from pystock.regression_analysis import regression_analysis
+from pystock.sic import load_sic_code_file
 
 ticker_column = 4
 
@@ -106,32 +106,6 @@ def create_arg_parser():
     parser.add_argument('--saveStockDF', help='The path to save a pickled version of the stock data to.', action='store', dest='save_pkl_path', default='')
     parser.add_argument('--debug', help='Run in debug mode.', action='store_true', dest='debug', default=False)
     return parser
-    
-
-def use_all_regression_methods(stock, n_prev, n_predict, start_date):
-    '''
-    Apply all regression methods to the given stock and save the results.
-    '''
-    tf = timeframe(start_date, n_prev, n_predict)
-    for m in Regression.methods:
-        r = stock.predict_prices(start_date, n_prev, n_predict, method=m, include_training_dates=True)
-        stock.plot_price(tf[0], tf[-1])
-        r.plot()
-        fig_title = '%s_%s_%04d-train_%04d-predict' % (stock.symbol, m, n_prev, n_predict)
-        plt.savefig('../output/%s' % (fig_title))
-        plt.close()
-
-def ex(stock_dict):
-    symbol = 'AAPL'
-    stock = stock_dict[symbol]
-    max_dates = 90
-    sample_range = np.linspace(2, max_dates,num=10).astype(int)
-    n_predict = 10
-    start_date = '2013-01-23'
-    for n_prev in sample_range:
-        use_all_regression_methods(stock, n_prev, n_predict, start_date)
-    print
-
 
 def get_stock_data_frame(load_pkl_path, save_pkl_path):
     if load_pkl_path:
@@ -165,7 +139,7 @@ def main():
         for ticker in fortune_500_tickers:
             stock_dict[ticker] = Stock(df, ticker)
     print 'Done building stock views.'
-    ex(stock_dict)
+    regression_analysis(stock_dict)
     
 if __name__ == '__main__':
     main()
