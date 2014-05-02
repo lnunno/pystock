@@ -6,7 +6,7 @@ Created on Feb 16, 2014
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, SGDRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn import svm
 from sklearn.preprocessing import normalize
 from pystock.time_utils import prev_n_business_days, next_n_business_days, \
@@ -15,12 +15,10 @@ from pystock.time_utils import prev_n_business_days, next_n_business_days, \
 class Regression(object):
     
     LINEAR = 'Linear'
-    SGD = 'SGD'
     SVR = 'SVR'
     
     methods = [
                LINEAR,
-               SGD,
                SVR
                ]
     
@@ -114,11 +112,11 @@ class Stock(object):
         @param num_previous_dates: int Number of dates to use prior to predict_start as the training data.
         @param num_successive_dates: int Number of dates to predict after predict_start.
         @param include_training_dates: bool Include the training dates in the predicted prices.
-        @param method: Method used for regression. One of: 'Linear', 'SGD', 'SVR', ...
+        @param method: Method used for regression. One of the Regression.methods values.
         
         @return: A Series with a DatetimeIndex with the dates and predicted prices.
         '''
-        predict_dates = next_n_business_days(predict_start, num_successive_dates, include_start=True)  # Convert to datetime64 so we can take string args and it won't break.
+        predict_dates = next_n_business_days(predict_start, num_successive_dates, include_start=True)
         training_dates = prev_n_business_days(predict_start, num_previous_dates, include_start=False)
         training_prices_series = self.get_prices_range(str(training_dates[-1]), str(training_dates[0]))
         training_date_index_ls = training_prices_series.index.values
@@ -144,10 +142,8 @@ class Stock(object):
         
         y = training_prices_series.values
         
-        if method == 'SGD':
-            regressor = SGDRegressor()
-        elif method == 'SVR':
-            regressor = svm.SVR(C=1e3)
+        if method == 'SVR':
+            regressor = svm.SVR(kernel='rbf',C=1e3)
         elif method == 'Linear':
             regressor = LinearRegression()
         else:

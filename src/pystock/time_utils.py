@@ -5,6 +5,7 @@ Created on Apr 26, 2014
 '''
 import numpy as np
 import pandas as pd
+from random import choice
 
 def next_n_business_days(start_date, n, include_start=False):
     '''
@@ -42,6 +43,12 @@ def timeframe(start_date, num_previous_days, num_succ_days):
     pds.reverse()
     nds = next_n_business_days(start_date, num_succ_days, include_start=True)
     return pds + nds
+
+def random_business_day(start_date, num_previous_days, num_succ_days):
+    '''
+    @return: A random business day within the given timeframe.
+    '''
+    return choice(timeframe(start_date, num_previous_days, num_succ_days))
 
 def prev_business_day(day):
     '''

@@ -22,29 +22,48 @@ def use_all_regression_methods(stock, n_prev, n_predict, start_date):
         plt.savefig('../output/%s' % (fig_title))
         plt.close()
         
-def apple_regression_ex(stock_dict):
+def apple_lin_regression_ex(stock_dict):
     '''
     A simple example to test out linear regression.
     '''
     symbol = 'AAPL'
     stock = stock_dict[symbol]
     max_dates = 180
-    sample_range = np.linspace(5, max_dates,num=5).astype(int)
+    sample_range = np.linspace(5, max_dates, num=5).astype(int)
     n_predict = 45
     start_date = '2013-01-23'
     plt.figure()
     tf = timeframe(start_date, 180, n_predict)
-    pr = stock.get_prices_range(tf[0],tf[-1])
+    pr = stock.get_prices_range(tf[0], tf[-1])
     pr.plot(label='Actual price')
     for n_prev in sample_range:
-        r = stock.predict_prices(start_date,n_prev,n_predict,method=Regression.LINEAR)
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=Regression.LINEAR)
         r.plot(label='%d day window' % (n_prev))
-#         use_all_regression_methods(stock, n_prev, n_predict, start_date)
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.title('Linear regression window size comparison for AAPL')
     plt.legend()
     plt.savefig('../output/Linear_regression_comparison_%d_day_prediction' % (n_predict))
     
+def apple_svr_regr(stock_dict):
+    symbol = 'AAPL'
+    stock = stock_dict[symbol]
+    max_dates = 2500
+    sample_range = np.linspace(5, max_dates, num=4).astype(int)
+    n_predict = 45
+    start_date = '2013-01-23'
+    plt.figure()
+    tf = timeframe(start_date, 2500, n_predict)
+    pr = stock.get_prices_range(tf[0], tf[-1])
+    pr.plot(label='Actual price')
+    for n_prev in sample_range:
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=Regression.SVR)
+        r.plot(label='%d day window' % (n_prev))
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.title('SVR window size comparison for AAPL')
+    plt.legend()
+    plt.savefig('../output/SVR_comparison_%d_day_prediction' % (n_predict))
+    
 def regression_analysis(stock_dict):
-    apple_regression_ex(stock_dict)
+    apple_svr_regr(stock_dict)
