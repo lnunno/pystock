@@ -23,6 +23,9 @@ def use_all_regression_methods(stock, n_prev, n_predict, start_date):
         plt.close()
         
 def apple_regression_ex(stock_dict):
+    '''
+    A simple example to test out linear regression.
+    '''
     symbol = 'AAPL'
     stock = stock_dict[symbol]
     max_dates = 180
