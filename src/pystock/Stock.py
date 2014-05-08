@@ -88,7 +88,7 @@ class Stock(object):
     def plot_price(self, start_date, end_date, show=False, save_path=''):
         price_ts = self.get_prices_range(start_date, end_date)
         plt.figure()
-        figure = price_ts.plot()
+        figure = price_ts.plot(label='Ground truth')
         plt.xlabel('Time')
         plt.ylabel('Price')
         plt.title('Price for %s from %s to %s' % (self.symbol, start_date, end_date))

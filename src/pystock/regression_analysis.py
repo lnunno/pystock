@@ -17,7 +17,13 @@ def use_all_regression_methods(stock, n_prev, n_predict, start_date):
     for m in Regression.methods:
         r = stock.predict_prices(start_date, n_prev, n_predict, method=m,include_training_dates=True)
         stock.plot_price(tf[0], tf[-1]) # Ground truth.
-        r.plot() 
+        training_ts = r[:n_prev]
+        testing_ts = r[n_prev:]
+        training_ts.plot(label='Training data')
+        testing_ts.plot(label='Testing data')
+        plt.axis('auto')
+        plt.legend()
+#         r.plot() 
         fig_title = '%s_%s_%04d-train_%04d-predict' % (stock.symbol, m, n_prev, n_predict)
         plt.savefig('../output/%s' % (fig_title))
         plt.close()
@@ -42,14 +48,14 @@ def apple_lin_regression_ex(stock_dict):
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.title('Linear regression window size comparison for AAPL')
-    plt.legend()
+    plt.legend(loc="upper left")
     plt.savefig('../output/Linear_regression_comparison_%d_day_prediction' % (n_predict))
     
-def apple_svr_regr(stock_dict):
+def apple_svr_rbf_regr_window(stock_dict):
     symbol = 'AAPL'
     stock = stock_dict[symbol]
-    max_dates = 2500
-    sample_range = np.linspace(5, max_dates, num=4).astype(int)
+    max_dates = 180
+    sample_range = np.linspace(5, max_dates, num=5).astype(int)
     n_predict = 45
     start_date = '2013-01-23'
     plt.figure()
@@ -61,9 +67,29 @@ def apple_svr_regr(stock_dict):
         r.plot(label='%d day window' % (n_prev))
     plt.xlabel('Date')
     plt.ylabel('Price')
-    plt.title('SVR window size comparison for AAPL')
-    plt.legend()
-    plt.savefig('../output/SVR_comparison_%d_day_prediction' % (n_predict))
+    plt.title('SVR RBF window size comparison for AAPL')
+    plt.legend(loc="lower left")
+    plt.savefig('../output/SVR_RBF_comparison_%d_day_prediction' % (n_predict))
+
+def apple_svr_poly_regr_window(stock_dict):
+    symbol = 'AAPL'
+    stock = stock_dict[symbol]
+    max_dates = 180
+    sample_range = np.linspace(5, max_dates, num=5).astype(int)
+    n_predict = 45
+    start_date = '2013-01-23'
+    plt.figure()
+    tf = timeframe(start_date, 2500, n_predict)
+    pr = stock.get_prices_range(tf[0], tf[-1])
+    pr.plot(label='Actual price')
+    for n_prev in sample_range:
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=Regression.SVR_POLY)
+        r.plot(label='%d day window' % (n_prev))
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.title('SVR Poly window size comparison for AAPL')
+    plt.legend(loc="lower left")
+    plt.savefig('../output/SVR_POLY_comparison_%d_day_prediction' % (n_predict))
 
 def apple_all_ex(stock_dict):
     '''
@@ -80,4 +106,6 @@ def apple_all_ex(stock_dict):
     
 def regression_analysis(stock_dict):
     apple_all_ex(stock_dict)
-    apple_svr_regr(stock_dict)
+    apple_lin_regression_ex(stock_dict)
+    apple_svr_poly_regr_window(stock_dict)
+    apple_svr_rbf_regr_window(stock_dict)
