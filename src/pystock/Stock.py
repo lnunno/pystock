@@ -8,18 +8,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn import svm
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import scale
 from pystock.time_utils import prev_n_business_days, next_n_business_days, \
     datetime64_to_ordinal_arr
-    
+from sklearn.linear_model.ridge import Ridge
+
 class Regression(object):
     
     LINEAR = 'Linear'
-    SVR = 'SVR'
+    RIDGE = 'Ridge'
+    SVR_RBF = 'SVR_RBF'
+    SVR_POLY = 'SVR_POLY'
+    
     
     methods = [
                LINEAR,
-               SVR
+               RIDGE,
+               SVR_RBF,
+               SVR_POLY
                ]
     
 
@@ -97,13 +103,11 @@ class Stock(object):
                        num_previous_dates,
                        num_successive_dates,
                        include_training_dates=False,
-                       method='Linear'):
+                       method=Regression.LINEAR):
         '''
         Linear Regression (Linear): Standard linear regression.
         
-        Stochastic Gradient Descent (SGD) is a "linear model fitted by minimizing a regularized empirical loss".
-        
-        Support Vector Regression (SVR) is an extension of Support Vector Machines used to solve regression problems.
+        Support Vector Regression (SVR_RBF) is an extension of Support Vector Machines used to solve regression problems.
         An explanation and example of its usage are available here:
         http://scikit-learn.org/dev/modules/svm.html#regression
         http://scikit-learn.org/dev/auto_examples/svm/plot_svm_regression.html#example-svm-plot-svm-regression-py
@@ -135,16 +139,20 @@ class Stock(object):
         
         # Normalize dates
         A = np.vstack((X, p))  # Have to stack to normalize training and test data as one.
-        A = normalize(A, axis=0)
+        A = scale(A, axis=0)
         n = p.shape[0]
         X = A[:-n]
         p = A[-n:]
         
         y = training_prices_series.values
         
-        if method == 'SVR':
-            regressor = svm.SVR(kernel='rbf',C=1e3)
-        elif method == 'Linear':
+        if method == Regression.SVR_RBF:
+            regressor = svm.SVR(kernel='rbf')
+        elif method == Regression.SVR_POLY:
+            regressor = svm.SVR(kernel='poly')
+        elif method == Regression.RIDGE:
+            regressor = Ridge()
+        elif method == Regression.LINEAR:
             regressor = LinearRegression()
         else:
             raise ValueError('Unrecognized regression method %s' % (method))

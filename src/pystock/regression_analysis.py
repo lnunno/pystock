@@ -15,9 +15,9 @@ def use_all_regression_methods(stock, n_prev, n_predict, start_date):
     '''
     tf = timeframe(start_date, n_prev, n_predict)
     for m in Regression.methods:
-        r = stock.predict_prices(start_date, n_prev, n_predict, method=m)
-        stock.plot_price(tf[0], tf[-1])
-        r.plot()
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=m,include_training_dates=True)
+        stock.plot_price(tf[0], tf[-1]) # Ground truth.
+        r.plot() 
         fig_title = '%s_%s_%04d-train_%04d-predict' % (stock.symbol, m, n_prev, n_predict)
         plt.savefig('../output/%s' % (fig_title))
         plt.close()
@@ -57,13 +57,27 @@ def apple_svr_regr(stock_dict):
     pr = stock.get_prices_range(tf[0], tf[-1])
     pr.plot(label='Actual price')
     for n_prev in sample_range:
-        r = stock.predict_prices(start_date, n_prev, n_predict, method=Regression.SVR)
+        r = stock.predict_prices(start_date, n_prev, n_predict, method=Regression.SVR_RBF)
         r.plot(label='%d day window' % (n_prev))
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.title('SVR window size comparison for AAPL')
     plt.legend()
     plt.savefig('../output/SVR_comparison_%d_day_prediction' % (n_predict))
+
+def apple_all_ex(stock_dict):
+    '''
+    A simple example to test out linear regression.
+    '''
+    symbol = 'AAPL'
+    stock = stock_dict[symbol]
+    max_dates = 180
+    sample_range = np.linspace(5, max_dates, num=5).astype(int)
+    n_predict = 45
+    start_date = '2007-01-23'
+    for n_prev in sample_range:
+        use_all_regression_methods(stock, n_prev, n_predict, start_date)
     
 def regression_analysis(stock_dict):
+    apple_all_ex(stock_dict)
     apple_svr_regr(stock_dict)
