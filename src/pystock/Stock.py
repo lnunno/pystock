@@ -23,7 +23,6 @@ class Regression(object):
     
     methods = [
                LINEAR,
-               RIDGE,
                SVR_RBF,
                SVR_POLY
                ]
@@ -88,15 +87,16 @@ class Stock(object):
     def plot_price(self, start_date, end_date, show=False, save_path=''):
         price_ts = self.get_prices_range(start_date, end_date)
         plt.figure()
+        ax = plt.subplot(111)
         figure = price_ts.plot(label='Ground truth')
-        plt.xlabel('Time')
-        plt.ylabel('Price')
-        plt.title('Price for %s from %s to %s' % (self.symbol, start_date, end_date))
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Price')
+        ax.set_title('Price for %s from %s to %s' % (self.symbol, start_date, end_date))
         if show:
             plt.show(figure)
         elif save_path:
             plt.savefig(figure)
-        return figure
+        return figure,ax
     
     def predict_prices(self,
                        predict_start,
