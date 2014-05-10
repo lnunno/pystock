@@ -6,11 +6,13 @@ Created on May 1, 2014
 '''
 import numpy as np
 import pandas as pd
-from pystock.time_utils import timeframe
+from pystock.time_utils import timeframe, random_business_day
 from pystock.Stock import Regression
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from sklearn.metrics.metrics import mean_absolute_error
+from pystock.Fortune500 import random_ticker
+from random import choice
 
 def use_all_regression_methods(stock, n_prev, n_predict, start_date):
     '''
@@ -160,11 +162,28 @@ def calculate_error(y_true,y_pred):
     return mean_absolute_error(y_true,y_pred)
 
 def random_stock_regression_sampling(stock_dict):
-    pass
+    train_days_arr = np.linspace(7,1000)
+    test_days_arr = np.linspace(2,365)
+    ticker = random_ticker()
+    stock = stock_dict[ticker]
+    for train_num in train_days_arr:
+        for test_num in test_days_arr:
+            valid_days = stock.prices.index.values[train_num:-test_num] 
+            start_day = choice(valid_days)
+            for m in Regression.methods:
+                results = stock.predict_prices(start_day, train_num, test_num, method=m)
+                y_pred = results.values
+                test_ts = stock.prices[results.index.values]
+                y_true = test_ts.values
+                assert len(y_true) == len(y_pred)
+                assert type(y_true) == type(y_pred)
+                assert not np.any(np.isnan(y_true))
+                assert not np.any(np.isnan(y_pred))
+                error = calculate_error(y_true, y_pred)
     
 def regression_analysis(stock_dict):
-    apple_all_ex(stock_dict)
-    apple_lin_regression_ex(stock_dict)
-    apple_svr_poly_regr_window(stock_dict)
-    apple_svr_rbf_regr_window(stock_dict)
+#     apple_all_ex(stock_dict)
+#     apple_lin_regression_ex(stock_dict)
+#     apple_svr_poly_regr_window(stock_dict)
+#     apple_svr_rbf_regr_window(stock_dict)
     random_stock_regression_sampling(stock_dict)

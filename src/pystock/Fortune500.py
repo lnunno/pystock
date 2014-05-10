@@ -11,7 +11,8 @@ def read_fortune_500_symbols(file_path):
         stocks = map(lambda x: x.strip(), lines)
         return stocks
     
-fortune_500_tickers = set(read_fortune_500_symbols('../resources/fortune500Symbols.txt'))
+_f500_ls = read_fortune_500_symbols('../resources/fortune500Symbols.txt')
+fortune_500_tickers = set(_f500_ls)
 
 def random_ticker():
-    return choice(fortune_500_tickers)
+    return choice(_f500_ls)
