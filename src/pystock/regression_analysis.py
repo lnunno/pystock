@@ -13,6 +13,8 @@ from matplotlib.font_manager import FontProperties
 from sklearn.metrics.metrics import mean_absolute_error
 from pystock.Fortune500 import random_ticker
 from random import choice
+from sklearn.utils.validation import check_arrays
+from collections import defaultdict
 
 def use_all_regression_methods(stock, n_prev, n_predict, start_date):
     '''
@@ -159,27 +161,61 @@ def apple_all_ex(stock_dict):
         use_all_regression_methods_superimpose(stock, n_prev, n_predict, start_date)
 
 def calculate_error(y_true,y_pred):
-    return mean_absolute_error(y_true,y_pred)
+    return mean_absolute_percentage_error(y_true,y_pred)
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+    y_true, y_pred = check_arrays(y_true, y_pred)
+
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 def random_stock_regression_sampling(stock_dict):
-    train_days_arr = np.linspace(7,1000)
-    test_days_arr = np.linspace(2,365)
-    ticker = random_ticker()
-    stock = stock_dict[ticker]
-    for train_num in train_days_arr:
-        for test_num in test_days_arr:
-            valid_days = stock.prices.index.values[train_num:-test_num] 
-            start_day = choice(valid_days)
+    train_days_arr = np.linspace(7,400,num=20).astype(int)
+    test_days_arr =  np.array([2,5,7,30,60,90,180,365])
+    num_tests = 150
+    for test_num in test_days_arr:
+        error_dict = defaultdict(list)
+        for train_num in train_days_arr:
             for m in Regression.methods:
-                results = stock.predict_prices(start_day, train_num, test_num, method=m)
-                y_pred = results.values
-                test_ts = stock.prices[results.index.values]
-                y_true = test_ts.values
-                assert len(y_true) == len(y_pred)
-                assert type(y_true) == type(y_pred)
-                assert not np.any(np.isnan(y_true))
-                assert not np.any(np.isnan(y_pred))
-                error = calculate_error(y_true, y_pred)
+                ls = []
+                i = num_tests
+                while i > 0:
+                    ticker = random_ticker()
+                    stock = stock_dict[ticker]
+                    while len(stock.prices.values) == 0:
+                        # Get a stock with actual data.
+                        ticker = random_ticker()
+                        stock = stock_dict[ticker]
+                    valid_days = np.array(stock.prices.index.values[train_num:-test_num],dtype='datetime64[D]') 
+                    if len(valid_days) <= 0:
+#                         print 'Warning %s did not have stock data for train=%d and test=%d' % (ticker,train_num,test_num)
+                        continue
+                    start_day = choice(valid_days)
+                    try:
+                        results = stock.predict_prices(start_day, train_num, test_num, method=m)
+                        test_ts = stock.prices[results.index.values]
+                    except ValueError:
+#                         print 'Weird error on %s train=%d and test=%d' % (ticker,train_num,test_num)
+                        continue
+                    test_ts = test_ts[pd.notnull(test_ts)] # Filter null vals
+                    y_pred = results[test_ts.index.values].values # Only get prediction dates where we have test values.
+                    y_true = test_ts.values
+                    try:
+                        error = calculate_error(y_true, y_pred)
+                    except ValueError:
+                        continue
+                    ls.append(error)
+                    print 'Fine with ',ticker,train_num,test_num,m
+                    i -= 1
+                average_err = np.mean(ls)
+                error_dict[m].append(average_err)
+        plt.figure()
+        for regr_method,mean_errors in error_dict.items():
+            plt.plot(train_days_arr,mean_errors,label=regr_method)
+            plt.xlabel('Training window size')
+            plt.ylabel('Mean Abs % Error')
+            plt.title('%d day Prediction with Varying Training Window Sizes' % (test_num))
+        plt.legend(loc='upper center', ncol=3, fancybox=True)
+        plt.savefig('../output/pred_error-%04d_days' % (test_num))
     
 def regression_analysis(stock_dict):
 #     apple_all_ex(stock_dict)

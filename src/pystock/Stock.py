@@ -156,7 +156,10 @@ class Stock(object):
             regressor = LinearRegression()
         else:
             raise ValueError('Unrecognized regression method %s' % (method))
-        regressor.fit(X, y)  # Train using the training X and y data.
+        try:
+            regressor.fit(X, y)  # Train using the training X and y data.
+        except ValueError:
+            raise ValueError('Issue fitting, re-throwing.')
         predictions = regressor.predict(p)
         index = pd.DatetimeIndex(predict_dates)
         series = pd.Series(predictions,index=index)
